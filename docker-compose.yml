@@ -1,0 +1,46 @@
+version: '3'
+services:
+    odoo:
+        container_name: odoo
+        image: odoo:latest
+        volumes:
+            - ./addons:/mnt/extra-addons
+            - ./config/odoo:/etc/odoo
+            - odoo-web-data:/var/lib/odoo
+        ports:
+            - "8069:8069"
+        depends_on:
+            - "db"
+            - "nginx"
+    nginx:
+        container_name: nginx
+        image: nginx:latest
+        restart: unless-stopped
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - ./config/nginx/conf:/etc/nginx/conf.d
+
+    db:
+      image: postgres:13
+      restart: always
+      container_name: postgresql
+      environment:
+        - POSTGRES_PASSWORD=odoo
+        - POSTGRES_USER=odoo
+        - POSTGRES_DB=postgres
+        - PGDATA=/var/lib/postgresql/data/pgdata
+      ports:
+        - "127.0.0.1:9432:5432"
+      volumes:
+        - ./odoo-db-data:/var/lib/postgresql/data/pgdata
+      logging:
+        driver: json-file
+        options:
+          max-size: "30m"
+          max-file: "10"
+
+volumes:
+  odoo-web-data:
+  odoo-db-data:
